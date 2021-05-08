@@ -1,0 +1,15 @@
+[package]
+name = "cargo-wsinit"
+version = "0.1.0"
+authors = ["Alan Evans <alan@signal.org>"]
+edition = "2018"
+description = "Initializes or updates a cargo workspace Cargo.toml file."
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/alan-signal/cargo-wsinit"
+
+[dependencies]
+clap = "2.33.0"
+colored = "2.0.0"
+toml_edit = "0.2.0"
+walkdir = "2.3.2"
