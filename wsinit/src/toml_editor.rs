@@ -1,8 +1,12 @@
 use toml_edit::*;
 
-const EXAMPLE: &str = r#"
-[workspace]
+const EMPTY_FILE_TEMPLATE: &str = r#"[workspace]
+
 members = [
+]
+"#;
+
+const EMPTY_MEMBERS_COMMENT_BLOCK: &str = r#"commented_array = [
     # List your crates here, e.g:
     # \"my-lib\",
 ]
@@ -12,6 +16,12 @@ pub fn toml_update<T>(contents: &str, sub_projects: &[T]) -> Result<String, Toml
 where
     T: AsRef<str> + Into<Value> + Clone,
 {
+    let contents = if contents.is_empty() {
+        EMPTY_FILE_TEMPLATE
+    } else {
+        contents
+    };
+
     let mut doc = contents.parse::<Document>()?;
 
     let mut array = Array::default();
@@ -29,8 +39,10 @@ where
     }
 
     if sub_projects.is_empty() {
-        let doc = EXAMPLE.parse::<Document>().expect("invalid doc");
-        array = doc["workspace"]["members"].as_array().unwrap().clone();
+        let doc = EMPTY_MEMBERS_COMMENT_BLOCK
+            .parse::<Document>()
+            .expect("invalid doc");
+        array = doc["commented_array"].as_array().unwrap().clone();
     }
 
     if doc["workspace"].is_none() {
@@ -53,8 +65,8 @@ mod tests {
 
         assert_eq!(
             new_toml,
-            r#"
-[workspace]
+            r#"[workspace]
+
 members = [
     # List your crates here, e.g:
     # \"my-lib\",
@@ -71,8 +83,8 @@ members = [
 
         assert_eq!(
             new_toml,
-            r#"
-[workspace]
+            r#"[workspace]
+
 members = [
     "lib1",
 ]
@@ -88,8 +100,8 @@ members = [
 
         assert_eq!(
             new_toml,
-            r#"
-[workspace]
+            r#"[workspace]
+
 members = [
     "lib1",
     "lib2",

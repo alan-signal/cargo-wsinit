@@ -30,7 +30,7 @@ mod tests {
 
         assert_eq!(
             format!(
-                "\n[workspace]\nmembers = [\n    \"{}/lib1\",\n    \"{}/lib2\",\n    \"{}/lib3/sub\",\n]\n",
+                "[workspace]\n\nmembers = [\n    \"{}/lib1\",\n    \"{}/lib2\",\n    \"{}/lib3/sub\",\n]\n",
                 root_path,
                 root_path,
                 root_path
@@ -61,7 +61,7 @@ mod tests {
         let file_contents = read_file(&toml_file);
 
         assert_eq!(
-            "\n[workspace]\nmembers = [\n    \"lib1\",\n    \"lib2\",\n    \"lib3/sub\",\n]\n",
+            "[workspace]\n\nmembers = [\n    \"lib1\",\n    \"lib2\",\n    \"lib3/sub\",\n]\n",
             file_contents
         );
     }

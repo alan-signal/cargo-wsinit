@@ -179,8 +179,8 @@ members = [
         let file_contents = read_file(&second_toml_file);
 
         assert_eq!(
-            r#"
-[workspace]
+            r#"[workspace]
+
 members = [
     # List your crates here, e.g:
     # \"my-lib\",
@@ -213,8 +213,8 @@ members = [
         let file_contents = read_file(&second_toml_file);
 
         assert_eq!(
-            r#"
-[workspace]
+            r#"[workspace]
+
 members = [
     # List your crates here, e.g:
     # \"my-lib\",
