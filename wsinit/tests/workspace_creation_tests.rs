@@ -157,7 +157,7 @@ members = [
     }
 
     #[test]
-    fn overwrite_an_existing_toml() {
+    fn overwrite_an_existing_toml_requiring_truncate() {
         let test_root = ThreadTestPath::new_removed();
         let path = test_root.to_str().unwrap();
 
@@ -167,7 +167,18 @@ members = [
             .expect("Expect new file to be made without issue");
         assert!(toml_file.exists());
 
-        overwrite_file(&toml_file, "a = [\"d\", \"e\", \"f\"] # comment");
+        overwrite_file(
+            &toml_file,
+            r#"[workspace]
+
+members = [
+    # List your crates here, e.g:
+    # \"my-lib\",
+    # \"old-lib\",
+    # \"old-lib2\",
+]
+"#,
+        );
 
         let options = Options::new(path, FileExistsBehaviour::Overwrite);
         let second_toml_file = Workspace::new(options)

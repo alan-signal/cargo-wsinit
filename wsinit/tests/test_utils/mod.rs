@@ -1,8 +1,10 @@
+mod test_dir_change;
 mod thread_test_path;
 
 use cargo_wsinit::TomlFile;
 use std::fs::File;
 use std::io::prelude::*;
+pub use test_dir_change::TestDirChange;
 pub use thread_test_path::ThreadTestPath;
 
 #[allow(dead_code)] // Used by one test crate but not another, causing a warning

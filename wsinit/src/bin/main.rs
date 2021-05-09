@@ -34,7 +34,7 @@ fn main() {
         .arg(
             Arg::with_name("path")
                 .short("p")
-                .default_value("")
+                .default_value(".")
                 .help("Path to initialize workspace"),
         );
 

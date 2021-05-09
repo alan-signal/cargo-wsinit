@@ -1,12 +1,9 @@
 use std::fmt::Debug;
-use std::fs;
-use std::fs::{File, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::io::prelude::*;
 use std::io::{Error as IoError, ErrorKind, SeekFrom};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-
-use walkdir::WalkDir;
 
 use crate::options::FileExistsBehaviour;
 use crate::options::Options;
@@ -43,7 +40,10 @@ impl Workspace {
         self.create_path()
             .map_err(|err| Error::GenericCreationError(err))?;
 
-        let mut sub_crates = self.find_sub_crates();
+        let mut sub_crates = self
+            .find_sub_crates()
+            .map_err(|err| Error::GenericCreationError(err))?;
+
         sub_crates.sort();
 
         let mut file = self.open_file()?;
@@ -60,32 +60,61 @@ impl Workspace {
         fs::create_dir_all(self.path())
     }
 
-    fn find_sub_crates(&self) -> Vec<String> {
+    fn find_sub_crates(&self) -> Result<Vec<String>, IoError> {
         let root = &self.options.path;
-        WalkDir::new(root)
-            .into_iter()
-            .filter_map(|v| v.ok())
-            .filter(|d| {
-                d.file_name()
-                    .to_str()
-                    .map(|f| f == "Cargo.toml")
-                    .unwrap_or(false)
-            })
-            .filter_map(|d| {
-                d.into_path()
-                    .parent()
-                    .filter(|p| p != root)
-                    .map(|p| p.to_str().map(|a| a.to_string()))
-            })
-            .filter_map(|z| z)
+        let sub_toml_files = Workspace::search_for_cargo_files(root, 0)?;
+
+        Ok(sub_toml_files
+            .iter()
             .map(|p| {
-                if p.starts_with("./") {
-                    p[2..].to_string()
-                } else {
-                    p
-                }
+                p.parent()
+                    .unwrap()
+                    .strip_prefix(root)
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string()
             })
-            .collect()
+            .collect())
+    }
+
+    fn search_for_cargo_files(dir: &PathBuf, depth: i32) -> Result<Vec<PathBuf>, IoError> {
+        let mut results: Vec<PathBuf> = vec![];
+
+        // do not look in the workspace root
+        if depth > 0 {
+            for path in fs::read_dir(dir)? {
+                let path = path.unwrap().path();
+
+                if path.is_file() {
+                    match path.file_name() {
+                        Some(p) if p == "Cargo.toml" => {
+                            results.push(path);
+                            break;
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        // do not look in sub directories after found a Cargo.toml
+        if results.is_empty() {
+            for path in fs::read_dir(dir)? {
+                let path = path.unwrap().path();
+
+                if path.is_dir() {
+                    match path.file_name() {
+                        Some(p) if p != "target" => {
+                            results.extend(Workspace::search_for_cargo_files(&path, depth + 1)?);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        Ok(results)
     }
 
     fn open_file(&self) -> Result<File, Error> {
@@ -116,7 +145,7 @@ impl Workspace {
     }
 
     fn write_toml(file: &mut File, toml: String) -> Result<(), IoError> {
-        file.set_len(0)?;
+        file.set_len(0)?; // in lieu of OpenOptions::truncate which would prevent reading
         file.seek(SeekFrom::Start(0))?;
         file.write_all(toml.as_bytes())
     }
