@@ -1,12 +1,17 @@
 [package]
 name = "cargo-wsinit"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alan Evans <alan@signal.org>"]
 edition = "2018"
 description = "Initializes or updates a cargo workspace Cargo.toml file."
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/alan-signal/cargo-wsinit"
+
+[[bin]]
+bench = false
+path = "src/bin/main.rs"
+name = "cargo-wsinit"
 
 [dependencies]
 clap = "2.33.0"
