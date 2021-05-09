@@ -1,14 +1,22 @@
+use std::env;
+
 use clap::{App, Arg, ArgMatches};
 use colored::*;
 
 use cargo_wsinit::{Error, FileExistsBehaviour, Options, Workspace};
 
+macro_rules! wsinit {
+    () => {
+        "wsinit"
+    };
+}
+
 fn main() {
-    let matches = App::new("Cargo Workspace Init")
+    let (args, cargo) = get_command_line_args(wsinit!());
+    let app = App::new("Cargo Workspace Init")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-        .usage("cargo wsinit [FLAGS] [OPTIONS]")
         .arg(
             Arg::with_name("overwrite")
                 .short("o")
@@ -28,8 +36,15 @@ fn main() {
                 .short("p")
                 .default_value("")
                 .help("Path to initialize workspace"),
-        )
-        .get_matches();
+        );
+
+    let matches = (match cargo {
+        CargoRun::LikelyRunFromCargo => {
+            app.usage(concat!("cargo ", wsinit!(), " [FLAGS] [OPTIONS]"))
+        }
+        CargoRun::RunOutsideCargo => app,
+    })
+    .get_matches_from(args);
 
     let path = matches.value_of("path").expect("Has default");
     let file_exists_behaviour = get_file_exists_behaviour(&matches);
@@ -90,6 +105,25 @@ fn main() {
                 .red()
             );
         }
+    }
+}
+
+#[derive(PartialEq)]
+enum CargoRun {
+    LikelyRunFromCargo,
+    RunOutsideCargo,
+}
+
+/// Removes sub_command, e.g. "wsinit" from the second index as this means it's likely running from cargo <sub_command>
+fn get_command_line_args(cargo_sub_command: &str) -> (Vec<String>, CargoRun) {
+    let mut args: Vec<String> = env::args().collect();
+
+    match args.get(1) {
+        Some(s) if s == cargo_sub_command => {
+            args.remove(1);
+            (args, CargoRun::LikelyRunFromCargo)
+        }
+        _ => (args, CargoRun::RunOutsideCargo),
     }
 }
 
